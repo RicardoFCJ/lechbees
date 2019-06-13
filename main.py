@@ -10,22 +10,33 @@ import threading
 import re
 import numpy as np
 import os
+import sys
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 def running():
     #Animate the graph
     def animate(i):
         global cumplot
         cumplot.clear()
-        vals=np.cumsum([1]*len(myData[myData.Type=="Response"]))
+        vals=np.cumsum([1]*len(myData[myData.Type!="Reinforcement"]))
 
         valsR = []
         valsr = []
         for v in list(vals):
-            if myData.Time[myData.Type=="Response"].reset_index().Time.iloc[v-1] in list(myData.Time[myData.Type=="Reinforcement"]) and not myData.Time[myData.Type=="Response"].reset_index().Time.iloc[v-1] in valsR:
-                valsR.append(myData.Time[myData.Type=="Response"].reset_index().Time.iloc[v-1])
+            if myData.Time[myData.Type!="Reinforcement"].reset_index().Time.iloc[v-1] in list(myData.Time[myData.Type=="Reinforcement"]) and not myData.Time[myData.Type!="Reinforcement"].reset_index().Time.iloc[v-1] in valsR:
+                valsR.append(myData.Time[myData.Type!="Reinforcement"].reset_index().Time.iloc[v-1])
                 valsr.append(v)
 
-        cumplot.step(myData['Time'], vals,where="post")
+        cumplot.step(myData[myData.Type!="Reinforcement"].Time, vals,where="post")
         cumplot.scatter(myData.loc[(myData.Type=="Reinforcement")]['Time'], valsr,marker="1",s=65)
         cumplot.set_xlabel("Time in seconds")
         cumplot.set_ylabel("Responses")
@@ -163,7 +174,7 @@ def running():
         #    tk.messagebox.showinfo("Error:", "Sorry. Something went wrong.\n\n"+str(e))
 
 if __name__ == "__main__":
-    if not (os.path.exists):
+    if not (os.path.exists('data')):
         os.makedirs('data')
     root = tk.Tk()
     root.title("LECH Bees")
@@ -171,7 +182,7 @@ if __name__ == "__main__":
     #Data
     myData=pd.DataFrame(columns=["Subject", "Session", "Scheme", "Ratio", "Type", "Time"])
 
-    logo = ImageTk.PhotoImage(Image.open("images/logo.png"))
+    logo = ImageTk.PhotoImage(Image.open(resource_path('images/logo.png')))
     logoPanel = tk.Label(root, image=logo)
     logoPanel.grid(column=0, row=0,rowspan=4, columnspan=2)
 
